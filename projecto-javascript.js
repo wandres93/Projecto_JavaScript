@@ -1,42 +1,103 @@
-function calculateEarningsAllCoins(myPowerPhs, networkPowerPhs = 100000) {
-  const rewardsPer10min = {
-    BTC: 0.0002,
-    ETH: 0.003,
-    DOGE: 10,
-    BNB: 0.001,
-    MATIC: 1.2,
-    RLT: 0.15,
-  };
+// --- Recompensas por bloque (cada 10 minutos)
+const rewardsPer10min = {
+  RLT: 0.15,
+  RST: 0.05,
+  BTC: 0.0002,
+  LTC: 0.05,
+};
 
-  const myPowerHs = myPowerPhs * 1e15;
-  const networkPowerHs = networkPowerPhs * 1e15;
-  const userShare = myPowerHs / networkPowerHs;
+// --- Poder de red actual por moneda
+const networkPowers = {
+  RLT: 145.933e18, // Eh/s -> H/s
+  RST: 23.298e18,
+  BTC: 205.476e18,
+  LTC: 54.573e18,
+};
 
+// --- Conversión de unidades de poder del jugador
+const unitMap = {
+  "Gh/s": 1e9,
+  "Th/s": 1e12,
+  "Ph/s": 1e15,
+  "Eh/s": 1e18,
+  "Zh/s": 1e21,
+};
+
+// Convierte el poder ingresado a H/s
+function convertToHs(value, unit) {
+  return value * unitMap[unit];
+}
+
+// Calcula ganancias en TODAS las monedas
+function calculateEarnings(myPowerValue, myPowerUnit) {
+  const myPowerHs = convertToHs(myPowerValue, myPowerUnit);
   const earnings = {};
 
   for (const coin in rewardsPer10min) {
-    const reward10min = rewardsPer10min[coin];
-    const earn10min = userShare * reward10min;
+    const reward = rewardsPer10min[coin];
+    const netPower = networkPowers[coin]; // Poder de red específico
+    const userShare = myPowerHs / netPower; // Proporción del jugador
+
+    const earn10min = userShare * reward;
     const earn24h = earn10min * 6 * 24;
     const earn30d = earn24h * 30;
 
     earnings[coin] = {
-      every_10_min: earn10min,
-      every_24_hours: earn24h,
-      every_30_days: earn30d,
+      every10: earn10min,
+      every24: earn24h,
+      every30: earn30d,
     };
   }
-
   return earnings;
 }
 
-/* Ejemplo de uso  */
-const myPower = 68.892; /* En Ph/s */
-const earnings = calculateEarningsAllCoins(myPower);
+// Muestra resultados en tabla
+function displayResults(earnings) {
+  const tableBody = document.querySelector("#resultsTable tbody");
+  tableBody.innerHTML = "";
 
-for (const coin in earnings) {
-  console.log(`\n${coin} Earnings:`);
-  console.log(`10 min: ${earnings[coin].every_10_min.toFixed(8)} ${coin}`);
-  console.log(`24 h : ${earnings[coin].every_24_hours.toFixed(8)} ${coin}`);
-  console.log(`30 d : ${earnings[coin].every_30_days.toFixed(8)} ${coin}`);
+  for (const coin in earnings) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${coin}</td>
+      <td>${earnings[coin].every10.toFixed(8)}</td>
+      <td>${earnings[coin].every24.toFixed(8)}</td>
+      <td>${earnings[coin].every30.toFixed(8)}</td>
+    `;
+    tableBody.appendChild(row);
+  }
 }
+
+// Guarda datos en LocalStorage
+function saveToStorage(powerValue, powerUnit) {
+  localStorage.setItem("lastPowerValue", powerValue);
+  localStorage.setItem("lastPowerUnit", powerUnit);
+}
+
+// Carga datos previos
+function loadFromStorage() {
+  const savedValue = localStorage.getItem("lastPowerValue");
+  const savedUnit = localStorage.getItem("lastPowerUnit");
+  if (savedValue && savedUnit) {
+    document.getElementById("powerValue").value = savedValue;
+    document.getElementById("powerUnit").value = savedUnit;
+  }
+}
+
+// Evento botón Calcular
+document.getElementById("calculateBtn").addEventListener("click", () => {
+  const powerValue = parseFloat(document.getElementById("powerValue").value);
+  const powerUnit = document.getElementById("powerUnit").value;
+
+  if (isNaN(powerValue) || powerValue <= 0) {
+    alert("Por favor, ingresa un poder válido.");
+    return;
+  }
+
+  const results = calculateEarnings(powerValue, powerUnit);
+  displayResults(results);
+  saveToStorage(powerValue, powerUnit);
+});
+
+// Inicialización
+loadFromStorage();

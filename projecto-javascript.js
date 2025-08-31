@@ -1,17 +1,19 @@
 // --- Recompensas por bloque (cada 10 minutos)
 const rewardsPer10min = {
-  RLT: 0.15,
-  RST: 0.05,
-  BTC: 0.0002,
-  LTC: 0.05,
+  RLT: 1.3125,
+  BTC: 0.00000413,
+  LTC: 0.00242,
+  BNB: 0.00061,
+  POL: 2.16918,
 };
 
 // --- Poder de red actual por moneda
 const networkPowers = {
-  RLT: 145.933e18, // Eh/s -> H/s
-  RST: 23.298e18,
-  BTC: 205.476e18,
-  LTC: 54.573e18,
+  RLT: 158.372e18, // Power en H/s
+  BTC: 172.55e18,
+  LTC: 27.67e18,
+  BNB: 43.354e18,
+  POL: 79.857e18,
 };
 
 // --- Conversión de unidades de poder del jugador
